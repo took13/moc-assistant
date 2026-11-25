@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOC Assistant | Draft review</title>
+<style>
+:root {
+  color-scheme: light; --ink:#17253b; --secondary:#4d6078; --muted:#e0e8f1;
+  --navy:#14263d; --blue:#2359ac; --light:#f1f5fa; --paper:#fff; --teal:#146858;
+  font-family: "Leelawadee UI", "Noto Sans Thai", system-ui, sans-serif;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--light); color:var(--ink); font-size:16px; line-height:1.5; }
+button, input, textarea { font:inherit; }
+button { cursor:pointer; border:1px solid #b7c8dd; background:#fff; color:#234566; border-radius:7px; padding:8px 13px; font-size:.88rem; font-weight:650; }
+button:hover { background:#e9f0fa; }
+:focus-visible { outline:3px solid #3e78cd; outline-offset:3px; }
+button.primary { color:#fff; background:var(--blue); border-color:var(--blue); }
+button.primary:hover { background:#194687; }
+button:disabled { opacity:.6; cursor:default; }
+.top { background:var(--navy); color:#fff; padding:15px max(22px, calc((100vw - 1340px)/2)); display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.brand { display:flex; align-items:center; gap:12px; font-size:1.06rem; font-weight:740; }
+.mark { display:grid; place-items:center; border:1px solid #6481a5; background:#234465; border-radius:9px; width:37px; height:37px; font-size:.76rem; letter-spacing:.07em; }
+.badge { font-size:.78rem; color:#d1e4fc; border:1px solid #557391; border-radius:20px; padding:4px 11px; white-space:nowrap; }
+.shell { width:min(1340px, calc(100% - 44px)); margin:0 auto; }
+.intro { display:flex; justify-content:space-between; align-items:end; gap:16px; margin:26px 0 19px; }
+.eyebrow { color:var(--blue); font-size:.77rem; font-weight:750; letter-spacing:.09em; }
+h1,h2,h3,p { margin:0; }
+h1 { font-size:clamp(1.6rem,3vw,2.3rem); letter-spacing:-.035em; line-height:1.22; margin:4px 0 6px; }
+h2 { font-size:1.13rem; }
+h3 { font-size:1rem; }
+.subtle { color:var(--secondary); font-size:.88rem; }
+.workspace { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:18px; align-items:start; padding-bottom:24px; }
+.surface { background:var(--paper); border:1px solid var(--muted); border-radius:12px; box-shadow:0 3px 8px #16283f0a; min-width:0; }
+.pane-head { display:flex; justify-content:space-between; align-items:start; gap:12px; padding:16px 20px; border-bottom:1px solid var(--muted); }
+.pane-head .subtle { margin-top:3px; }
+.pane-head .id { background:#eaf2fd; color:#214e87; padding:4px 8px; border-radius:5px; font-size:.78rem; white-space:nowrap; font-weight:650; }
+.form-body { padding:4px 20px 20px; }
+fieldset { min-width:0; margin:12px 0 0; padding:0 0 14px; border:0; border-bottom:1px solid var(--muted); }
+fieldset:last-child { border-bottom:0; padding-bottom:0; }
+legend { font-weight:730; font-size:.95rem; padding:0; margin-bottom:9px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px 14px; }
+.full { grid-column:1/-1; }
+label { display:block; min-width:0; font-size:.86rem; font-weight:650; }
+input,textarea { display:block; color:var(--ink); background:#fcfdff; border:1px solid #c6d3e3; border-radius:6px; width:100%; margin-top:4px; padding:8px 10px; min-height:39px; font-size:.89rem; }
+textarea { resize:vertical; min-height:75px; }
+input:focus, textarea:focus { background:#fff; }
+.check { display:flex; gap:8px; align-items:center; }
+.check input { margin:0; min-height:0; width:16px; height:16px; accent-color:var(--blue); }
+.panel { position:sticky; top:14px; }
+.panel-body { padding:15px 19px 19px; }
+.tools { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.status { margin:12px 0; font-size:.83rem; color:var(--secondary); padding:8px 11px; background:#edf3fb; border-radius:6px; }
+.status[data-state="stale"] { color:#864717; background:#fff1dc; }
+.status[data-state="clear"] { color:var(--teal); background:#e9f7f0; }
+.tabs { display:flex; gap:14px; border-bottom:1px solid var(--muted); margin:0 0 11px; }
+.tabs button { border:0; border-radius:0; border-bottom:2px solid transparent; padding:8px 3px; color:var(--secondary); }
+.tabs [aria-selected="true"] { border-bottom-color:var(--blue); color:var(--blue); }
+.findings { display:grid; gap:8px; }
+.card { padding:10px 11px; border:1px solid var(--muted); border-radius:8px; background:#fff; }
+.card-top { display:flex; flex-wrap:wrap; align-items:center; gap:6px 9px; margin-bottom:4px; }
+.chip { border-radius:4px; background:#eaf2fc; color:#214d82; font-size:.75rem; padding:2px 6px; font-weight:700; }
+.chip.rule { color:#775012; background:#fff0d4; }
+.chip.required { color:#8d302a; background:#fcece9; }
+.card p { font-size:.86rem; color:var(--secondary); margin:3px 0; overflow-wrap:anywhere; }
+.card .reference { font-size:.8rem; color:#4b6484; }
+.link { border:none; background:transparent; padding:3px 0 0; color:var(--blue); }
+.link:hover { background:transparent; text-decoration:underline; }
+.blank { padding:15px 11px; color:var(--secondary); background:#f5f8fc; border-radius:7px; font-size:.9rem; }
+.draft-text { white-space:pre-wrap; }
+.panel-note { border-top:1px solid var(--muted); padding-top:9px; margin-top:13px; font-size:.8rem; color:var(--secondary); }
+[hidden] { display:none !important; }
+.mode-nav { display:flex; flex-wrap:wrap; gap:8px; margin:19px 0 0; }
+.mode-nav [aria-pressed="true"] { background:#e5effd; border-color:#7d9fc9; color:#164886; }
+.record { display:grid; gap:12px; margin:0; padding:14px 0; }
+.record dt { color:var(--secondary); font-size:.82rem; }
+.record dd { margin:0; font-size:.94rem; font-weight:650; }
+.follow-up { display:grid; gap:8px; margin:10px 0 13px; }
+.follow-up .check { align-items:start; padding:8px 9px; background:#f2f6fb; border-radius:6px; }
+.follow-up input { flex:none; margin-top:4px; }
+@media(max-width:880px) { .workspace { grid-template-columns:1fr; } .panel { position:static; } }
+@media(max-width:540px) {
+  .shell { width:calc(100% - 24px); } .top { padding:12px; }
+  .intro { align-items:start; flex-direction:column; margin-top:19px; }
+  .form-grid { grid-template-columns:1fr; } .pane-head,.panel-body,.form-body { padding-left:12px; padding-right:12px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true">MO</span> MOC Assistant</div>
+  <span class="badge">Prototype · ข้อมูลสมมติ</span>
+</header>
+<main class="shell">
+  <nav class="mode-nav" aria-label="โหมดการทำงาน">
+    <button id="open-draft" type="button" aria-controls="draft-view" aria-pressed="true">ตรวจร่างก่อนส่ง</button>
+    <button id="open-approved" type="button" aria-controls="approved-view" aria-pressed="false">ทบทวน MOC ที่อนุมัติแล้ว</button>
+  </nav>
+  <div id="draft-view">
+  <div class="intro">
+    <div>
+      <p class="eyebrow">MANAGEMENT OF CHANGE</p>
+      <h1>ตรวจร่าง MOC ก่อนส่ง</h1>
+      <p class="subtle">แก้ข้อมูลในฟอร์มจำลอง แล้วกดตรวจเพื่อดูรายการที่ควรทบทวน</p>
+    </div>
+    <button id="reset" type="button">โหลดเคสตัวอย่างใหม่</button>
+  </div>
+
+  <div class="workspace">
+    <section class="surface" aria-labelledby="form-title">
+      <div class="pane-head">
+        <div><h2 id="form-title">New MOC</h2><p class="subtle">แบบฟอร์ม eMOC จำลอง</p></div>
+        <span class="id">MOCK-MOC-001</span>
+      </div>
+      <form id="moc" class="form-body">
+        <fieldset>
+          <legend>MOC Info &amp; Affected Assets</legend>
+          <div class="form-grid">
+            <label class="full">MOC Title <span aria-hidden="true">*</span><input id="title" required></label>
+            <label>Plant / Area <span aria-hidden="true">*</span><input id="plant" required></label>
+            <label>Asset / Tag No.<input id="asset" placeholder="เช่น DEMO-CWP-01"></label>
+            <label>Estimated Start Date <span aria-hidden="true">*</span><input type="date" id="start" required></label>
+            <label>Estimated End Date <span aria-hidden="true">*</span><input type="date" id="end" required></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Change Description</legend>
+          <div class="form-grid">
+            <label>Background <span aria-hidden="true">*</span><textarea id="background" required></textarea></label>
+            <label>Objective <span aria-hidden="true">*</span><textarea id="objective" required></textarea></label>
+            <label>Justification <span aria-hidden="true">*</span><textarea id="justification" required></textarea></label>
+            <label>Proposal <span aria-hidden="true">*</span><textarea id="proposal" required></textarea></label>
+            <label class="full">Goal Achievement Target<textarea id="goal" placeholder="ระบุผลที่วัดได้และวิธีตรวจรับ"></textarea></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Risk &amp; Supporting Documents</legend>
+          <div class="form-grid">
+            <label>Risk Detail<textarea id="risk"></textarea></label>
+            <label>Mitigation Plan<textarea id="mitigation" placeholder="ระบุสิ่งที่ต้องดำเนินการและผู้ตรวจยืนยัน"></textarea></label>
+            <label class="check full"><input type="checkbox" id="attachment"> มีเอกสารประกอบ (จำลอง)</label>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+
+    <aside class="surface panel" aria-labelledby="panel-title">
+      <div class="pane-head">
+        <div><h2 id="panel-title">MOC Assistant Panel</h2><p class="subtle">ตรวจข้อมูลรายช่องและช่วยร่างข้อความ</p></div>
+      </div>
+      <div class="panel-body">
+        <div class="tools">
+          <button class="primary" type="button" id="review">ตรวจร่างปัจจุบัน</button>
+          <button type="button" id="draft">ช่วยร่าง 4 ช่อง</button>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+        <div class="tabs" role="tablist" aria-label="ผลจาก Assistant">
+          <button type="button" role="tab" id="review-tab" aria-selected="true" aria-controls="review-results">ผลตรวจ</button>
+          <button type="button" role="tab" id="draft-tab" aria-selected="false" aria-controls="draft-results" tabindex="-1">ร่างข้อความ</button>
+        </div>
+        <section id="review-results" role="tabpanel" aria-labelledby="review-tab"><div class="findings" id="findings"></div></section>
+        <section id="draft-results" role="tabpanel" aria-labelledby="draft-tab" hidden><div class="findings" id="drafts"></div></section>
+        <p class="panel-note">เดโมใช้กฎและข้อความจำลองในเบราว์เซอร์ ผู้ทบทวน MOC เป็นผู้ยืนยันความถูกต้องและความเสี่ยง</p>
+      </div>
+    </aside>
+  </div>
+  </div>
+  <div id="approved-view" hidden>
+    <div class="intro">
+      <div>
+        <h1>ทบทวน MOC ที่อนุมัติแล้ว</h1>
+        <p class="subtle">เทียบเงื่อนไขในรายการอนุมัติกับหลักฐานการดำเนินงาน</p>
+      </div>
+    </div>
+    <div class="workspace">
+      <section class="surface" aria-labelledby="approved-title">
+        <div class="pane-head">
+          <div>
+            <h2 id="approved-title">Approved MOC · อ่านอย่างเดียว</h2>
+            <p class="subtle">Cooling Water Pump Seal Replacement</p>
+          </div>
+          <span class="id">MOCK-MOC-002 · Rev. 1</span>
+        </div>
+        <div class="form-body">
+          <dl class="record">
+            <div><dt>สถานะ / วันที่อนุมัติ</dt><dd>Approved · 15 พ.ย. 2026</dd></div>
+            <div><dt>ขอบเขตที่อนุมัติ</dt><dd>เปลี่ยนซีล Cooling Water Pump เฉพาะ DEMO-CWP-01</dd></div>
+            <div><dt>กำหนดปิดรายการตามแผน</dt><dd>24 พ.ย. 2026</dd></div>
+          </dl>
+          <fieldset>
+            <legend>เงื่อนไขตามบันทึกอนุมัติจำลอง</legend>
+            <ol>
+              <li>มีบันทึกยืนยัน Hold Point จากผู้มีอำนาจก่อนติดตั้ง</li>
+              <li>มีรายงานตรวจรับหลังเปลี่ยนซีล</li>
+              <li>มีบันทึกยืนยันผลเทียบกับเกณฑ์ตรวจรับ</li>
+            </ol>
+          </fieldset>
+        </div>
+      </section>
+      <aside class="surface panel" aria-labelledby="approved-panel-title">
+        <div class="pane-head">
+          <div>
+            <h2 id="approved-panel-title">Post-Approval Review</h2>
+            <p class="subtle">วันที่ทบทวนจำลอง 25 พ.ย. 2026</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <fieldset>
+            <legend>หลักฐานที่พบในชุดเอกสารจำลอง</legend>
+            <div class="follow-up">
+              <label class="check"><input id="hold-evidence" type="checkbox"> บันทึกยืนยัน Hold Point</label>
+              <label class="check"><input id="inspection-evidence" type="checkbox" checked> รายงานตรวจรับ</label>
+              <label class="check"><input id="target-evidence" type="checkbox"> บันทึกยืนยันผลเทียบกับเกณฑ์</label>
+            </div>
+          </fieldset>
+          <button class="primary" id="check-approved" type="button">ตรวจเงื่อนไขและหลักฐาน</button>
+          <p id="approved-status" class="status" role="status"></p>
+          <div class="findings" id="approved-findings"></div>
+          <p class="panel-note">การพบเอกสารเป็นจุดเริ่มต้น ผู้ทบทวนยังต้องตรวจเนื้อหา วันที่ และผู้ลงนามจากหลักฐานจริง</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+<script>
+"use strict";
+
+const sample = Object.freeze({
+  title: "Cooling Water Pump Seal Replacement",
+  plant: "Demo Plant · Cooling Water Area",
+  asset: "",
+  start: "2026-12-12",
+  end: "2026-12-10",
+  background: "พบการรั่วซึมบริเวณซีลของ Cooling Water Pump ในพื้นที่ระบบน้ำหล่อเย็น",
+  objective: "ลดการรั่วซึมและคืนความพร้อมใช้งานของปั๊ม",
+  justification: "ต้องตรวจยืนยันขอบเขตและรายการอะไหล่ก่อนวางแผนงาน",
+  proposal: "เสนอเปลี่ยนซีลปั๊ม DEMO-CWP-01 และบันทึกผลตรวจรับหลังดำเนินงาน",
+  goal: "",
+  risk: "อาจเกิดการรั่วซึมซ้ำหลังคืนอุปกรณ์",
+  mitigation: "",
+  attachment: false
+});
+
+const names = {
+  title: "MOC Title", plant: "Plant / Area", asset: "Asset / Tag No.",
+  start: "Estimated Start Date", end: "Estimated End Date", background: "Background",
+  objective: "Objective", justification: "Justification", proposal: "Proposal",
+  goal: "Goal Achievement Target", risk: "Risk Detail", mitigation: "Mitigation Plan",
+  attachment: "เอกสารประกอบ"
+};
+const required = ["title", "plant", "start", "end", "background", "objective", "justification", "proposal"];
+const draftFields = ["background", "objective", "justification", "proposal"];
+const byId = (id) => document.getElementById(id);
+
+function readForm() {
+  return Object.fromEntries(Object.keys(sample).map((key) => {
+    const field = byId(key);
+    return [key, field.type === "checkbox" ? field.checked : field.value.trim()];
+  }));
+}
+
+function reviewForm(data) {
+  const results = [];
+  const add = (field, type, title, detail, reference) => results.push({ field, type, title, detail, reference });
+  for (const field of required) {
+    if (!data[field]) {
+      add(field, "required", "กรอก " + names[field], "ช่องนี้จำเป็นตามฟอร์มจำลอง", "ฟอร์มจำลอง · " + names[field]);
+    }
+  }
+
+  if (data.start && data.end && data.end < data.start) {
+    add("end", "rule", "วันสิ้นสุดก่อนวันเริ่ม", "ตรวจวันที่ใน Estimated Duration ให้ตรงกับแผนงาน", "กฎจำลอง · วันสิ้นสุดต้องไม่ก่อนวันเริ่ม");
+  }
+
+  const mentionedTags = Array.from(new Set(data.proposal.toUpperCase().match(/\bDEMO-[A-Z]+-\d+\b/g) || []));
+  const enteredTags = new Set(data.asset.toUpperCase().match(/\bDEMO-[A-Z]+-\d+\b/g) || []);
+  const missingTags = mentionedTags.filter((tag) => !enteredTags.has(tag));
+  if (missingTags.length) {
+    add("asset", "simulated", data.asset ? "Tag ใน Proposal ไม่ตรงกับ Affected Assets" : "ยังไม่มี Tag ใน Affected Assets",
+      "Proposal อ้างถึง " + missingTags.join(", ") + " ให้ตรวจยืนยันกับรายการอุปกรณ์", "ข้อมูลที่เทียบ · Proposal และ Asset / Tag No.");
+  }
+  if (!data.goal) {
+    add("goal", "simulated", "ยังไม่มีเกณฑ์ตรวจรับ", "ให้ผู้รับผิดชอบระบุค่าหรือเงื่อนไขที่วัดได้ วิธีตรวจ และผู้ตรวจยืนยัน", "Checklist จำลอง · เกณฑ์ตรวจรับ");
+  }
+  if (data.risk && !data.mitigation) {
+    add("mitigation", "rule", "มี Risk Detail แต่ยังไม่มี Mitigation Plan", "ระบุมาตรการและผู้รับผิดชอบตามผลทบทวนของทีม MOC", "Checklist จำลอง · ความเสี่ยงและมาตรการ");
+  }
+  if (!data.attachment) {
+    add("attachment", "rule", "ยังไม่ระบุเอกสารประกอบ", "ยืนยันว่ามีเอกสารที่เกี่ยวข้องกับขอบเขตงานในชุดที่จะส่ง", "ฟอร์มจำลอง · Attachments");
+  }
+  return results;
+}
+
+function makeDrafts(data) {
+  return {
+    background: data.background || "พบ [อาการ/สภาพปัจจุบัน] ที่ [พื้นที่หรืออุปกรณ์] จาก [หลักฐานที่ตรวจสอบแล้ว]",
+    objective: data.objective || "ดำเนินการเพื่อ [เป้าหมายการเปลี่ยนแปลง] และยืนยันผลด้วย [เกณฑ์ที่ทีมรับรอง]",
+    justification: data.justification || "เสนอการเปลี่ยนแปลงเนื่องจาก [เหตุผลที่ยืนยันแล้ว] ส่งผลต่อ [รายการที่เกี่ยวข้อง]",
+    proposal: data.proposal
+      ? data.proposal + "\nอุปกรณ์ที่ได้รับผลกระทบ: " + (data.asset || "[ยืนยัน Asset / Tag No.]") + "\nหลักฐานตรวจรับ: " + (data.goal || "[ระบุเกณฑ์ตรวจรับที่ทีมยืนยัน]")
+      : "เสนอ [ขอบเขตการเปลี่ยนแปลง] ที่ " + (data.asset || "[ยืนยัน Asset / Tag No.]") + " พร้อมแนบ [หลักฐานและวิธีตรวจรับ]"
+  };
+}
+
+function paragraph(text, className) {
+  const element = document.createElement("p");
+  element.textContent = text;
+  if (className) element.className = className;
+  return element;
+}
+
+function jumpButton(field) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "link";
+  button.textContent = "ไปที่ " + names[field];
+  button.addEventListener("click", () => byId(field).focus());
+  return button;
+}
+
+function setStatus(text, state = "") {
+  const status = byId("status");
+  status.textContent = text;
+  status.dataset.state = state;
+}
+
+function showTab(tab, focus = false) {
+  for (const key of ["review", "draft"]) {
+    const active = key === tab;
+    const button = byId(key + "-tab");
+    button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+    byId(key + "-results").hidden = !active;
+    if (focus && active) button.focus();
+  }
+}
+
+function renderReview() {
+  const results = reviewForm(readForm());
+  const container = byId("findings");
+  container.replaceChildren();
+  const labels = { required: "ข้อมูลจำเป็น", rule: "Rule", simulated: "AI จำลอง" };
+  for (const finding of results) {
+    const card = document.createElement("article");
+    card.className = "card";
+    const top = document.createElement("div");
+    top.className = "card-top";
+    const chip = document.createElement("span");
+    chip.className = "chip " + finding.type;
+    chip.textContent = labels[finding.type];
+    const heading = document.createElement("h3");
+    heading.textContent = finding.title;
+    top.append(chip, heading);
+    card.append(top, paragraph(finding.detail), paragraph(finding.reference, "reference"), jumpButton(finding.field));
+    container.append(card);
+  }
+  if (!results.length) container.append(paragraph("พร้อมให้ผู้ทบทวนตรวจร่างต่อ", "blank"));
+  setStatus(results.length ? "พบ " + results.length + " รายการที่ควรทบทวน" : "ผ่านทุกกฎในเดโม", results.length ? "" : "clear");
+  showTab("review");
+}
+
+function renderDraft() {
+  const drafts = makeDrafts(readForm());
+  const container = byId("drafts");
+  container.replaceChildren(paragraph("เลือกนำร่างไปใส่ฟอร์มทีละช่อง ข้อความใน [วงเล็บ] ต้องให้ผู้ใช้ยืนยัน", "blank"));
+  for (const field of draftFields) {
+    const card = document.createElement("article");
+    card.className = "card";
+    const heading = document.createElement("h3");
+    heading.textContent = names[field];
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "link";
+    button.textContent = "ใช้ร่างในช่อง " + names[field];
+    button.addEventListener("click", () => {
+      byId(field).value = drafts[field];
+      invalidateReview();
+      setStatus("ใส่ร่างใน " + names[field] + " แล้ว กดตรวจร่างอีกครั้ง", "stale");
+      button.textContent = "ใส่ในฟอร์มแล้ว";
+      button.disabled = true;
+      byId(field).focus();
+    });
+    card.append(heading, paragraph(drafts[field], "draft-text"), button);
+    container.append(card);
+  }
+  setStatus("สร้างร่างจากข้อมูลในฟอร์มปัจจุบันแล้ว");
+  showTab("draft");
+}
+
+function invalidateReview() {
+  byId("findings").replaceChildren(paragraph("กดตรวจร่างปัจจุบันเพื่อดูผลล่าสุด", "blank"));
+}
+
+function markChanged() {
+  invalidateReview();
+  byId("drafts").replaceChildren(paragraph("กดช่วยร่าง 4 ช่องเพื่อสร้างจากข้อมูลล่าสุด", "blank"));
+  setStatus("ฟอร์มมีการแก้ไข กดตรวจร่างอีกครั้ง", "stale");
+}
+
+function loadSample() {
+  for (const [key, value] of Object.entries(sample)) {
+    const field = byId(key);
+    if (field.type === "checkbox") field.checked = value;
+    else field.value = value;
+  }
+  markChanged();
+  renderReview();
+}
+
+byId("moc").addEventListener("input", () => markChanged());
+byId("moc").addEventListener("submit", (event) => event.preventDefault());
+byId("review").addEventListener("click", renderReview);
+byId("draft").addEventListener("click", renderDraft);
+byId("reset").addEventListener("click", loadSample);
+
+for (const key of ["review", "draft"]) {
+  const button = byId(key + "-tab");
+  button.addEventListener("click", () => showTab(key));
+  button.addEventListener("keydown", (event) => {
+    const target = { ArrowLeft: key === "draft" ? "review" : "draft", ArrowRight: key === "review" ? "draft" : "review", Home: "review", End: "draft" }[event.key];
+    if (target) {
+      event.preventDefault();
+      showTab(target, true);
+    }
+  });
+}
+
+const evidenceChecks = [
+  {
+    field: "hold-evidence", condition: 1,
+    title: "ยังไม่พบหลักฐานยืนยัน Hold Point",
+    detail: "ขอบันทึกที่แสดงผู้ยืนยันและเวลา แล้วเทียบกับวันและเวลาติดตั้งจริง"
+  },
+  {
+    field: "inspection-evidence", condition: 2,
+    title: "ยังไม่พบรายงานตรวจรับ",
+    detail: "ขอรายงานตรวจรับที่อ้างถึงงานและอุปกรณ์ในขอบเขตที่อนุมัติ"
+  },
+  {
+    field: "target-evidence", condition: 3,
+    title: "ยังไม่พบหลักฐานยืนยันผลเทียบกับเกณฑ์",
+    detail: "ขอผลการวัดหรือบันทึกการตรวจ แล้วให้ผู้ทบทวนเทียบกับเกณฑ์ในรายการอนุมัติ"
+  }
+];
+
+function approvedFindings(evidence, dueDate, reviewDate) {
+  const gaps = evidenceChecks.filter(item => !evidence[item.field]).map(item => ({
+    title: item.title,
+    detail: item.detail,
+    source: "บันทึกอนุมัติจำลอง · เงื่อนไขข้อ " + item.condition
+  }));
+  if (gaps.length && dueDate < reviewDate) {
+    gaps.push({
+      title: "เลยกำหนดตามแผนและยังมีหลักฐานให้ติดตาม",
+      detail: "ติดตามหลักฐานที่ระบุและยืนยันสถานะปิดจริงกับผู้รับผิดชอบ",
+      source: "กำหนดปิดตามแผน · 24 พ.ย. 2026 ในตัวอย่าง"
+    });
+  }
+  return gaps;
+}
+
+function renderApprovedReview() {
+  const evidence = Object.fromEntries(evidenceChecks.map(item => [item.field, byId(item.field).checked]));
+  const results = approvedFindings(evidence, "2026-11-24", "2026-11-25");
+  const container = byId("approved-findings");
+  const status = byId("approved-status");
+  container.replaceChildren();
+  for (const item of results) {
+    const card = document.createElement("article");
+    card.className = "card";
+    const title = document.createElement("h3");
+    title.textContent = item.title;
+    card.append(title, paragraph(item.detail), paragraph(item.source, "reference"));
+    container.append(card);
+  }
+  status.dataset.state = results.length ? "" : "clear";
+  status.textContent = results.length
+    ? "พบ " + results.length + " รายการสำหรับติดตาม"
+    : "พบหลักฐานครบตามรายการตัวอย่าง · รอผู้ทบทวนยืนยัน";
+}
+
+function selectMode(mode) {
+  const approved = mode === "approved";
+  byId("draft-view").hidden = approved;
+  byId("approved-view").hidden = !approved;
+  byId("open-draft").setAttribute("aria-pressed", String(!approved));
+  byId("open-approved").setAttribute("aria-pressed", String(approved));
+}
+
+byId("open-draft").addEventListener("click", () => selectMode("draft"));
+byId("open-approved").addEventListener("click", () => selectMode("approved"));
+byId("check-approved").addEventListener("click", renderApprovedReview);
+for (const item of evidenceChecks) {
+  byId(item.field).addEventListener("change", () => {
+    const status = byId("approved-status");
+    status.dataset.state = "stale";
+    status.textContent = "มีการเปลี่ยนข้อมูลหลักฐาน กดตรวจอีกครั้งเพื่ออัปเดตผล";
+  });
+}
+
+loadSample();
+renderApprovedReview();
+</script>
+</body>
+</html>
